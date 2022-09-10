@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Fic Fuc Foe</title>
+  </head>
+  <body
+    style="
+      white-space: pre;
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 20px;
+    "
+  >
+    <p>Fic Fuc Foe</p>
+    <div id="field"></div>
+    <div id="input-area"></div>
+  </body>
+  <script>
+    const fieldEl = document.getElementById("field");
+    const inputEl = document.getElementById("input-area");
+    const print = (text) => (fieldEl.innerHTML = text);
+    const input = (text) => {
+      inputEl.innerHTML = `${text} <input id="input" />`;
+      const el = document.getElementById("input");
+      el.select();
+      return new Promise((resolve) => {
+        el.addEventListener("keydown", (event) => {
+          if (event.key === "Enter") {
+            inputEl.innerHTML = "";
+            resolve(event.target.value);
+          }
+        });
+      });
+    };
+
+    const game = async () => {
+      const players = ["X", "O"];
+      let playerIdx = 0;
+      const field = Array(9).fill("-");
+      const combinations = [];
+      for (const i of [0, 1, 2]) {
+        combinations[0] = [...(combinations[0] || []), i * 4];
+        combinations[1] = [...(combinations[1] || []), (i + 1) * 2];
+        for (const j of [0, 1, 2]) {
+          combinations[i + 2] = [...(combinations[i + 2] || []), i * 3 + j];
+          combinations[i + 5] = [...(combinations[i + 5] || []), i + j * 3];
+        }
+      }
+
+      while (true) {
+        let result;
+        for (const comb of combinations) {
+          result =
+            { XXX: "X", OOO: "O", "---": "-" }[
+              comb.map((i) => field[i]).join("")
+            ] || result;
+          if (result && result !== "-") break;
+        }
+
+        const player = players[playerIdx % 2];
+        print(
+          [0, 1, 2]
+            .map((i) => field.slice(i * 3, (i + 1) * 3).join(""))
+            .join("\n") +
+            ((result === "-" && `\n\nCurrent player: ${player}`) ||
+              (result && `\n\n${result} wins!`) ||
+              "\n\nDraw")
+        );
+
+        if (result !== "-") return;
+
+        while (true) {
+          const row = parseInt(await input("Row"));
+          const column = parseInt(await input("column"));
+          const i = (row - 1) * 3 + column - 1;
+          if (field[i] === "-") {
+            field[i] = player;
+            break;
+          }
+        }
+
+        playerIdx += 1;
+      }
+    };
+
+    game().catch(console.error);
+  </script>
+</html>
